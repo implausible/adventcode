@@ -1,43 +1,41 @@
 const { readInputAndSplitIntoLines } = require('../util');
 
-const getCountOfZerosAndOnesAtIndex = (index, inputLines) =>
-  inputLines
-    .map(line => line[index])
-    .reduce(
-      ([zerosCount, onesCount], char) => char === '0'
-        ? [zerosCount + 1, onesCount]
-        : [zerosCount, onesCount + 1],
-      [0, 0]
-    );
+const countNumberOfOnesAtIndexInInputLines = (index, inputLines) =>
+  inputLines.reduce((sum, inputLine) => sum + Number.parseInt(inputLine[index], 10), 0);
 
-const getLeastCommonBinaryCharacterPreferLeastCommon = ([zerosCount, onesCount]) => onesCount >= zerosCount ? '0' : '1';
-const getMostCommonBinaryCharacterPreferMostCommon = ([zerosCount, onesCount]) => onesCount >= zerosCount ? '1' : '0';
-
-const makeFilterByIndexWithCharacterCriteria = filterCriteriaFn => (index, inputLines) => {
-  const filterCriteria = filterCriteriaFn(getCountOfZerosAndOnesAtIndex(index, inputLines));
-  return inputLines.filter(inputLine => inputLine[index] === filterCriteria);
+const findDifferenceOfNumberOfOnesAndZerosAtIndex = (index, inputLines) => {
+  const numberOfOnes = countNumberOfOnesAtIndexInInputLines(index, inputLines);
+  const numberOfZeros = inputLines.length - numberOfOnes;
+  return numberOfOnes - numberOfZeros;
 };
-const filterByIndexUsingLeastCommonStrategy = makeFilterByIndexWithCharacterCriteria(getLeastCommonBinaryCharacterPreferLeastCommon);
-const filterByIndexUsingMostCommonStrategy = makeFilterByIndexWithCharacterCriteria(getMostCommonBinaryCharacterPreferMostCommon);
 
-const findRatingString = applyFilterStrategy => inputLines => {
-  const findRatingRecursive = (index, lines) => {
-    const filteredLines = applyFilterStrategy(index, lines);
-    return filteredLines.length === 1
-      ? filteredLines[0]
-      : findRatingRecursive(index + 1, filteredLines);
+const findStringUsingIndexFilteringStrategy = (makeFilterPredicate, inputLines) => {
+  const findStringUsingIndexFilteringStrategyRecursive = (index, prevLines) => {
+    const filteredLines = prevLines.filter(makeFilterPredicate(index, prevLines));
+    if (filteredLines.length === 1) {
+      return filteredLines[0];
+    }
+
+    return findStringUsingIndexFilteringStrategyRecursive(index + 1, filteredLines);
   };
 
-  return findRatingRecursive(0, inputLines);
+  return findStringUsingIndexFilteringStrategyRecursive(0, inputLines);
 };
-const findOxygenRatingString = findRatingString(filterByIndexUsingMostCommonStrategy);
-const findCo2ScurbberRating = findRatingString(filterByIndexUsingLeastCommonStrategy);
+
+const createFilterPredicateForCharacterSelector = characterSelector => (index, inputLines) => {
+  const comparisonCharacter = characterSelector(findDifferenceOfNumberOfOnesAndZerosAtIndex(index, inputLines));
+  return line => line[index] === comparisonCharacter;
+};
+const filterPredicateForMostCommonPreferOnes = createFilterPredicateForCharacterSelector(diff => diff >= 0 ? '1' : '0');
+const filterPredicateForLeastCommonPreferZeros = createFilterPredicateForCharacterSelector(diff => diff >= 0 ? '0' : '1');
+
+const binaryStringToNumber = str => Number.parseInt(str, 2);
 
 const main = () => {
   const inputLines = readInputAndSplitIntoLines('input');
-  const oxygenRating = Number.parseInt(findOxygenRatingString(inputLines), 2);
-  const co2ScrubberRating = Number.parseInt(findCo2ScurbberRating(inputLines), 2);
-  console.log(oxygenRating * co2ScrubberRating);
+  const oxygenRating = findStringUsingIndexFilteringStrategy(filterPredicateForMostCommonPreferOnes, inputLines);
+  const co2ScrubberRating = findStringUsingIndexFilteringStrategy(filterPredicateForLeastCommonPreferZeros, inputLines);
+  console.log(binaryStringToNumber(oxygenRating) * binaryStringToNumber(co2ScrubberRating));
 };
 
 main();
