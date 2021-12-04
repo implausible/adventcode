@@ -27,23 +27,23 @@ const playAndUpdateBoards = (entry, boards) => R.map(
 
 const doesBoardHaveWinningRow = R.any(R.all(R.prop('marked')));
 const doesBoardHaveWinningColumn = R.pipe(R.transpose, doesBoardHaveWinningRow);
-const findWinningBoard = R.find(R.either(doesBoardHaveWinningRow, doesBoardHaveWinningColumn));
+const findWinningBoards = R.filter(R.either(doesBoardHaveWinningRow, doesBoardHaveWinningColumn));
 
 const simulateUntilWinner = (inputBoards) => {
   let mutableBoards = inputBoards;
   let lastWinningBoard;
   let lastWinningEntry;
-  for (let i = 0; i < gameSequence.length; ++i) {
+  for (let i = 0; i < gameSequence.length && mutableBoards.length; ++i) {
     const entry = gameSequence[i];
     mutableBoards = playAndUpdateBoards(entry, mutableBoards);
     if (i < 5) {
       continue;
     }
 
-    let winningBoard;
-    while (winningBoard = findWinningBoard(mutableBoards)) {
-      mutableBoards = R.reject(board => winningBoard === board, mutableBoards);
-      lastWinningBoard = R.clone(winningBoard);
+    const winningBoards = findWinningBoards(mutableBoards);
+    if (winningBoards.length) {
+      mutableBoards = R.without(winningBoards, mutableBoards);
+      lastWinningBoard = R.last(winningBoards);
       lastWinningEntry = entry;
     }
   }
