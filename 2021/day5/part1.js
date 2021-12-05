@@ -3,51 +3,35 @@ const { readInputAndSplitIntoLines } = require('../util');
 const { __ } = R;
 
 const gatherLinesByStartAndEndCoords = () => R.map(R.pipe(
-  R.split(' -> '),
-  R.map(R.pipe(
-    R.split(','),
-    R.map(Number.parseInt)
-  )),
-  ([[xStart, yStart], [xEnd, yEnd]]) => ({ x: [xStart, xEnd], y: [yStart, yEnd] })
+  R.split(/ -> |,/),
+  R.map(Number.parseInt),
+  ([xStart, yStart, xEnd, yEnd]) => ({ xConstraints: [xStart, xEnd], yConstraints: [yStart, yEnd] })
 ))(readInputAndSplitIntoLines('input'));
 
-const buildNumberGridOfZeros = (xSize, ySize) => R.times(() => R.repeat(0, xSize), ySize);
+const walkHorizontal = (callback, startPoint, endPoint) => R.pipe(
+  R.juxt([Math.min, R.pipe(Math.max, R.inc)]),
+  R.apply(R.range),
+  R.forEach(callback)
+)(startPoint, endPoint);
 
-const oneMoreThanMaxInList = R.pipe(R.apply(Math.max), R.inc);
-const getMaxConstraints = R.pipe(
-  R.map(R.map(oneMoreThanMaxInList)),
-  R.reduce(R.mergeWith(Math.max), 0)
-);
-
-const getMinAndMax = R.applySpec({ min: Math.min, max: Math.max });
-const walkHorizontal = (callback, startPoint, endPoint) => {
-  const { min, max } = getMinAndMax(startPoint, endPoint);
-  for (let i = min; i <= max; ++i) {
-    callback(i);
-  }
-};
-
-const buildGridOfOverlaps = (lineDefinitions) => {
-  const { x: maxX, y: maxY } = getMaxConstraints(lineDefinitions);
-  const gridOfOverlaps = buildNumberGridOfZeros(maxX, maxY);
-  for (const lineDefinition of lineDefinitions) {
-    const { x: xConstraints, y: yConstraints } = lineDefinition;
-    if (xConstraints[0] === xConstraints[1]) {
-      walkHorizontal((y) => {
-        gridOfOverlaps[y][xConstraints[0]] += 1;
-      }, ...yConstraints);
-    } else if (yConstraints[0] === yConstraints[1]) {
-      walkHorizontal((x) => {
-        gridOfOverlaps[yConstraints[0]][x] += 1;
-      }, ...xConstraints);
-    }
+const buildGridOfOverlaps = R.reduce((sparseGridOfOverlaps, { xConstraints, yConstraints }) => {
+  const incrementCellInSparseGrid = R.curry((x, y) => {
+    const row = sparseGridOfOverlaps[y] ?? [];
+    row[x] = (row[x] ?? 0) + 1;
+    sparseGridOfOverlaps[y] = row;
+  });
+  if (xConstraints[0] === xConstraints[1]) {
+    walkHorizontal(incrementCellInSparseGrid(xConstraints[0]), ...yConstraints);
+  } else if (yConstraints[0] === yConstraints[1]) {
+    walkHorizontal(incrementCellInSparseGrid(__, yConstraints[0]), ...xConstraints);
   }
 
-  return gridOfOverlaps;
-};
+  return sparseGridOfOverlaps;
+}, []);
 
 const calculateNumberOfOverlaps = R.pipe(
-  R.chain(R.filter(R.lt(1))),
+  R.flatten,
+  R.filter(R.lt(1)),
   R.length
 );
 
