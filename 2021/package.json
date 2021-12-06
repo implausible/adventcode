@@ -4,6 +4,10 @@
   "main": "index.js",
   "license": "MIT",
   "private": true,
+  "scripts": {
+    "compile": "rescript",
+    "clean": "rescript clean -with-deps"
+  },
   "dependencies": {
     "ramda": "^0.27.1"
   }
