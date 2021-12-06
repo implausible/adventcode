@@ -1,10 +1,7 @@
 {
   "name": "adventcode",
   "version": "0.0.1",
-  "sources": {
-    "dir" : "day5",
-    "subdirs" : true
-  },
+  "sources": ["utils", "day5", "day6"],
   "package-specs": {
     "module": "commonjs",
     "in-source": true
