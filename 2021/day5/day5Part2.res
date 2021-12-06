@@ -21,9 +21,9 @@ let gatherLinesByStartAndEndCoords = (): array<lineDefinition> => {
 
 let buildRangeOrEnsureEquallyFilledArray = (xConstraints: point, (yStart, yEnd)) =>
   switch xConstraints {
-    | (xStart, xEnd) if xStart < xEnd  => range(xStart, xEnd)
-    | (xStart, xEnd) if xStart > xEnd  => range(xEnd, xStart) -> reverse
-    | (xStart, _xEnd)                  => make(abs(yEnd - yStart) + 1, xStart)
+    | (xStart, xEnd) if xStart < xEnd => range(xStart, xEnd)
+    | (xEnd, xStart) if xStart < xEnd => range(xStart, xEnd) -> reverse
+    | (xStart, _xEnd)                 => make(abs(yEnd - yStart) + 1, xStart)
   }
 
 let buildAllLineCoordinates = (lineDefinitions: array<lineDefinition>) =>
